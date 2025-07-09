@@ -1,17 +1,12 @@
+from attributes_prediction.llm_attribute_predictors import ExampleSelectorBase, LLMAttributePredictorRunnerBase
 from utils.utility import get_attribute_types_according_to_data, load_rave_dataset, pull_ollama_models, load_experiment_data, store_experiment_data
 from models.response_model_creation import *
 from constants.rave_constants import *
-from experiments.running_experiments import LLMOracleExperimentRunner, SampleProcessingResult
-from datetime import datetime
+from experiments.running_experiments import SampleProcessingResult
 import os
 import json
-from pydantic import BaseModel
 from pathlib import Path
 from cross_validation.fold_parameters_provider import FoldParametersProvider
-from models.rave_dataset import RaveSample
-from attributes_prediction.text_attributes_predictor import TextAttributesPredictor
-from attributes_prediction.multilabel_classificators import XGBoostMultiClassifier, LogisticRegressionMultiClassifier, SVMMultiClassifier, KNNClassifierBase
-from vectorization.vectorizers import BoWVectorizer, TFIDFVectorizer, EmbeddingsVectorizer
 
 used_version = "v2"
 attribute_names_version = {
@@ -20,6 +15,7 @@ attribute_names_version = {
 }
 
 RESULTS_FOLDER = 'results'
+RESULTS_FOLDER = 'results_attributes'
 SELECTED_ATTRIBUTES = attribute_names_version[used_version]
 
 print("Running RAVE dataset experiments!")
@@ -75,35 +71,25 @@ folds_folder_path = Path("./dataset/folds/")
 fold_parameters_provider = FoldParametersProvider()
 fold_parameters_provider.folds_dict = fold_parameters_provider.read_folds_folder(folds_folder_path)
 fold_parameters_provider.initialize_fold_data(rave_dataset)
-fold_parameters_provider.train_for_each_fold(SORTED_ATTRIBUTES)
 
 run_parameters_combinations = []
-fold_numbers = fold_parameters_provider.fold_numbers
 
 for fold_number in fold_parameters_provider.fold_numbers:
-    _, fold_test_data = fold_parameters_provider.get_fold_train_test_data(fold_number)
-    run_parameters_combinations.append((fold_test_data,{ 'oracle_sentences': False, 'oracle_attributes': True, 'oracle_types': False }, ({}, {}), None, fold_number))
-    run_parameters_combinations.append((fold_test_data,{ 'oracle_sentences': False, 'oracle_attributes': False, 'oracle_types': False }, ({}, {}), None, fold_number))
-    for _, predictor in fold_parameters_provider.get_fold_text_attributes_predictors(fold_number).items():
-        run_parameters_combinations.append((fold_test_data,{ 'oracle_sentences': False, 'oracle_attributes': False, 'oracle_types': False }, ({}, {}), predictor, fold_number))
-
-response_model_cache: dict[str, dict[int, type[BaseModel]]] = {}
+    fold_train_data, fold_test_data = fold_parameters_provider.get_fold_train_test_data(fold_number)
+    run_parameters_combinations.append((fold_train_data, fold_test_data, 0, fold_number))
+    run_parameters_combinations.append((fold_train_data, fold_test_data, 1, fold_number))
+    run_parameters_combinations.append((fold_train_data, fold_test_data, 2, fold_number))
 
 for model_name in MODELS_TO_TEST:
-    for test_data, experiment_parameters, (attr_titles, attr_descriptions), text_attributes_predictor, fold_number in run_parameters_combinations:
+    for train_data, test_data, number_of_examples, fold_number in run_parameters_combinations:
         
-        experiment_runner = LLMOracleExperimentRunner(
-            response_model_cache=response_model_cache,
+        experiment_runner = LLMAttributePredictorRunnerBase(
             dataset_version=used_version,
             fold_number=fold_number,
             model_name=model_name,
             used_attributes=ALL_SELECTED_ATTRIBUTES_V2,
-            attribute_types_dict=attributes_types_dict,
-            attribute_titles_dict=attr_titles,
-            attribute_descriptions_dict=attr_descriptions,
-            text_attributes_predictor=text_attributes_predictor,
-            **experiment_parameters,
-            response_model_name="ApartmentDetails",
+            number_of_examples=number_of_examples,
+            example_selector=ExampleSelectorBase(train_data, SEED),
             temperature=TEMPERATURE,
             max_retries=MAX_RETRIES,
             max_tokens=MAX_TOKENS,
@@ -129,7 +115,7 @@ for model_name in MODELS_TO_TEST:
         }
         
         is_working = experiment_runner.warmup_model()
-    
+        
         for result in experiment_runner.run_experiment(data_to_process):
             result_dict_list.append(result.to_dict())
             if len(result_dict_list) % STORE_AFTER == 0:

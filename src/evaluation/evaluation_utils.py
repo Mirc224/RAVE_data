@@ -4,7 +4,7 @@ import itertools
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
-from rave_dataset import RaveSample
+from models.rave_dataset import RaveSample
 from evaluation.experiment_evaluation import ExperimentResults, ExperimentEvaluator
 
 BASE_COLUMNS = [

@@ -1,9 +1,9 @@
 from pydantic import BaseModel, create_model
-from response_model_creation import ModelBluePrint
-from text_samples import TextSample, Sentence
+from models.response_model_creation import ModelBluePrint
+from models.text_samples import TextSample, Sentence
 from typing import Generator
 from pathlib import Path
-from rave_dataset import *
+from models.rave_dataset import *
 import json
 import itertools
 import ollama

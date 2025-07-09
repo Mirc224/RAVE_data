@@ -1,7 +1,7 @@
 import numpy as np
-from vectorizers import VectorizerBase
-from multilabel_classificators import ClassifierBase
-from vectorizer_utils import create_binary_vector
+from vectorization.vectorizers import VectorizerBase
+from attributes_prediction.multilabel_classificators import ClassifierBase
+from vectorization.vectorizer_utils import create_binary_vector
 
 class TextAttributesPredictor:
     def __init__(self, 

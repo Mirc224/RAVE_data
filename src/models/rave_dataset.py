@@ -1,4 +1,4 @@
-from rave_constants import *
+from constants.rave_constants import *
 class RaveSentence:
     def __init__(self, order_number: int, sentence_dict: str):
         self.__text: dict = self.__handle_sentnece_dict(sentence_dict)

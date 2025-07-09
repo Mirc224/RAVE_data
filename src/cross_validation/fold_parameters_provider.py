@@ -1,12 +1,12 @@
 import os
 import json
 import numpy as np
-from vectorizer_utils import create_binary_vector
+from vectorization.vectorizer_utils import create_binary_vector
 from pathlib import Path
-from rave_dataset import RaveSample
-from text_attributes_predictor import TextAttributesPredictor
-from vectorizers import VectorizerBase, BoWVectorizer, TFIDFVectorizer, EmbeddingsVectorizer
-from multilabel_classificators import XGBoostMultiClassifier, LogisticRegressionMultiClassifier, SVMMultiClassifier, KNNClassifierBase, ClassifierBase
+from models.rave_dataset import RaveSample
+from attributes_prediction.text_attributes_predictor import TextAttributesPredictor
+from vectorization.vectorizers import VectorizerBase, BoWVectorizer, TFIDFVectorizer, EmbeddingsVectorizer
+from attributes_prediction.multilabel_classificators import XGBoostMultiClassifier, LogisticRegressionMultiClassifier, SVMMultiClassifier, KNNClassifierBase, ClassifierBase
 
 class FoldParametersProvider:
     def __init__(self):

@@ -5,18 +5,19 @@ from typing import Iterable
 import instructor
 from openai import OpenAI
 from pydantic import BaseModel, create_model
-from rave_dataset import RaveSample, RaveSentence
+from models.rave_dataset import RaveSample, RaveSentence
 from openai.types.chat.chat_completion import ChatCompletion
 import time
-from response_model_creation import FieldBluePrint, ModelBluePrint
-from utility import create_response_model
+from models.response_model_creation import FieldBluePrint, ModelBluePrint
+from utils.utility import create_response_model
 import datetime
-from text_attributes_predictor import TextAttributesPredictor
+from attributes_prediction.text_attributes_predictor import TextAttributesPredictor
 
 class SampleProcessingResult:
     ID = "id"
     RESULT_RESPONSES = "responses"
     MODEL_RESPONSE = "response"
+    EXAMPLES = "examples"
     USED_PROMPT_TOKENS = "usedPromptTokens"
     USED_COMPLETION_TOKENS = "usedCompletionTokens"
     TOTAL_USED_TOKENS = "totalUsedTokens"
@@ -26,6 +27,7 @@ class SampleProcessingResult:
     def __init__(self, id: int):
         self.__id = id
         self.__completion_responses: list[dict] = []
+        self.__examples: list[dict] = []
         self.__start_time: float = 0
         self.__end_time: float = 0
         self.__created: str = datetime.datetime.now().isoformat()
@@ -59,8 +61,17 @@ class SampleProcessingResult:
         self.__created = value
 
     @property
+    def examples(self) -> list[dict]:
+        return self.__examples
+    
+    @examples.setter
+    def examples(self, value: list[dict]):
+        self.__examples = value
+
+    @property
     def completion_responses(self) -> list[dict]:
         return self.__completion_responses
+    
     
     @staticmethod
     def from_dict(data: dict) -> SampleProcessingResult:
@@ -70,6 +81,8 @@ class SampleProcessingResult:
         result.start_time = data[SampleProcessingResult.START_TIME]
         result.end_time = data[SampleProcessingResult.END_TIME]
         result.created = data[SampleProcessingResult.CREATED]
+        result.examples = data.get(SampleProcessingResult.EXAMPLES, [])
+
         return result
     
     def parse_completion_response(self, completion: ChatCompletion) -> dict:
@@ -87,12 +100,12 @@ class SampleProcessingResult:
     def to_dict(self) -> dict:
         return {
             self.ID : self.id,
+            self.EXAMPLES: self.examples,
             self.RESULT_RESPONSES : self.completion_responses,
             self.START_TIME: self.start_time,
             self.END_TIME: self.end_time,
             self.CREATED: self.created
         }
-
 
 class LLMExperimentRunnerBase(ABC):
     INFO_DELIMITER = "_"
