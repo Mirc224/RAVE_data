@@ -18,7 +18,7 @@ RESULTS_FOLDER = 'results'
 RESULTS_FOLDER = 'results_attributes'
 SELECTED_ATTRIBUTES = attribute_names_version[used_version]
 
-print("Running RAVE dataset experiments!")
+print("Running attribute predictions using LLM!")
 print(f"Dataset version: {used_version}")
 
 MODELS_TO_TEST = [
@@ -58,12 +58,6 @@ dataset_path = f"./dataset/rave_dataset_{used_version}.json"
 rave_dataset = load_rave_dataset(dataset_path)
 for sample in rave_dataset:
     sample.keep_selected_text_attributes(SELECTED_ATTRIBUTES)
-
-attribute_enhancements_path = f"./schema_enhancement/attributes_descriptions_{used_version}.json"
-with open(attribute_enhancements_path, "r", encoding="utf8") as f:
-    loaded_attribute_descriptions = json.load(f)
-
-attributes_types_dict: dict[str, list[type]] = get_attribute_types_according_to_data(rave_dataset)
 
 SORTED_ATTRIBUTES = sorted(SELECTED_ATTRIBUTES)
 

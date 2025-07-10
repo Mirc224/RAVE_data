@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Iterable
 import instructor
 from openai import OpenAI
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel
 from models.rave_dataset import RaveSample, RaveSentence
 from openai.types.chat.chat_completion import ChatCompletion
 import time
@@ -12,6 +12,42 @@ from models.response_model_creation import FieldBluePrint, ModelBluePrint
 from utils.utility import create_response_model
 import datetime
 from attributes_prediction.text_attributes_predictor import TextAttributesPredictor
+
+class AttributePredictionResult:
+    ID = "id"
+    PREDICTED_ATTRIBUTES = "predictedAttributes"
+
+    def __init__(self, id: int):
+        self.__id: int = id
+        self.__predicted_attributes: list[str] = []
+    
+    @property
+    def id(self) -> int:
+        return self.__id
+    
+    @id.setter
+    def id(self, value: int):
+        self.__id = value
+
+    @property
+    def predicted_attributes(self) -> list[str]:
+        return self.__predicted_attributes
+    
+    @predicted_attributes.setter
+    def predicted_attributes(self, value: list[str]):
+        self.__predicted_attributes = value
+
+    @staticmethod
+    def from_dict(data: dict) -> AttributePredictionResult:
+        result = AttributePredictionResult(data[AttributePredictionResult.ID])
+        result.predicted_attributes = data[AttributePredictionResult.PREDICTED_ATTRIBUTES]
+        return result
+
+    def to_dict(self) -> dict:
+        return {
+            self.ID : self.id,
+            self.PREDICTED_ATTRIBUTES: self.predicted_attributes
+        }
 
 class SampleProcessingResult:
     ID = "id"
